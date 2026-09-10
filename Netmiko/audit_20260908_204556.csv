@@ -1,0 +1,3 @@
+ip_address,hostname,hardware_name,serial_number,software_image,uptime,last_reload_reason,clock,cpu_usage_5min,cpu_mem_usage,io_mem_usage
+192.168.0.142,EDGE_R1,['IOSv'],['9NG3QXFLHUL1K4O2570YN'],VIOS-ADVENTERPRISEK9-M,"2 hours, 1 minute",Unknown reason,UTC 15:45:54.907 Sep 8 2026,1%,20.33%,82.42%
+192.168.0.224,EDGE_R2,['IOSv'],['9X0B8JXL9T4XSZ7F0ZC7B'],VIOS-ADVENTERPRISEK9-M,"2 hours, 1 minute",Unknown reason,UTC 15:45:54.141 Sep 8 2026,1%,20.31%,82.42%

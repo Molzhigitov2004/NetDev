@@ -1,0 +1,11 @@
+EDGE_R1:
+  device_type: cisco_ios
+  host: 192.168.0.142
+  username: cisco
+  password: cisco
+
+EDGE_R2:
+  device_type: cisco_ios
+  host: 192.168.0.224
+  username: cisco
+  password: cisco

@@ -1,0 +1,5 @@
+en
+show ip int br
+conf t 
+do show ip int br
+end
