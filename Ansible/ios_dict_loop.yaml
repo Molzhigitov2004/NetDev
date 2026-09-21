@@ -1,0 +1,24 @@
+- name: Add Multiple Vlans
+  hosts: "ios_devices"
+  gather_facts: false
+  connection: network_cli
+  vars:
+    interfaces: {
+      "100": {"command": "shut", "ip": "192.168.10.1"},
+      "200": {"command": "shut", "ip": "192.168.20.1"},
+      "300": {"command": "shut", "ip": "192.168.30.1"}
+    }
+  tasks:
+    - name: add loopbacks
+      ios_config:
+        lines:
+          - interface loopback {{ item.key }}
+      with_dict: "{{ interfaces }}"
+
+    - name: configure loopbacks
+      ios_config:
+        lines:
+          - ip address {{ item.value.ip }} 255.255.255.0
+          - "{{ item.value.command}}"
+        parents: interface loopback {{ item.key }}
+      with_dict: "{{ interfaces }}"

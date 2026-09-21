@@ -1,0 +1,13 @@
+- name: Add Multiple Loopbacks
+  hosts: "ios_devices"
+  gather_facts: false
+  connection: network_cli
+  vars:
+    vlan_numbers: [67, 68, 69]
+  tasks:
+    - name: add vlans
+      ios_config:
+        lines:
+          - int loopback {{ item }}
+      loop: "{{ vlan_numbers }}"
+      register: output

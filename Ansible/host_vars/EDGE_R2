@@ -1,0 +1,9 @@
+---
+ansible_host: 192.168.0.224        # IP address of the target device Ansible connects to
+ansible_user: cisco                # SSH username for login
+ansible_ssh_pass: cisco            # SSH password for login (plaintext here - use Vault in production)
+ansible_connection: network_cli    # Connection plugin; network_cli is for network devices (not regular SSH/shell)
+ansible_network_os: ios            # Tells Ansible this is a Cisco IOS device, so it knows the correct modules/syntax
+ansible_become: yes                # Enables privilege escalation (like "enable" mode on Cisco gear)
+ansible_become_method: enable      # Specifies enable mode as the escalation method
+ansible_become_pass: cisco         # Password for enable mode

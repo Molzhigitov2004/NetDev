@@ -1,0 +1,8 @@
+---
+- name: Template Basic
+  hosts: localhost
+  tasks:
+    - name: copy one file to another
+      template:
+        src: shit.txt
+        dest: tobeshit.txt
