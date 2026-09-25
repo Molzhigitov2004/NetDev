@@ -1,0 +1,20 @@
+- name: Gather all information about given host and save in the files
+  hosts: ios_devices
+  gather_facts: false
+  tasks:
+    - name: gather facts
+      cisco.ios.ios_facts:
+        gather_subset: all
+
+    - name: Create facts directory
+      ansible.builtin.file:
+        path: ./facts
+        state: directory
+      delegate_to: localhost
+
+    - name: Save facts to txt file
+      ansible.builtin.copy:
+        content: "{{ ansible_facts | to_nice_json }}"
+        dest: "./facts/{{ inventory_hostname }}_facts.txt"
+      delegate_to: localhost
+        

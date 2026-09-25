@@ -1,0 +1,338 @@
+- name: Initial Configs For Newly Deployed Switch
+  hosts: ios_switches
+  gather_facts: false
+  connection: network_cli
+  # Certain configs here are pre-made manually (SSH bootstrap), but redeclared here for clean/idempotent re-use.
+  # Run with: --tags L2   (access switches, SVI-based mgmt)
+  #      or:  --tags L3   (distribution switches, Loopback0-based mgmt)
+
+    # ---------------------------------------------------------------------
+    # STEP 0: FQDN and no damned dns lookup
+    # ---------------------------------------------------------------------
+  tasks:
+    - name: Set domain name and lookup parameters
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_system:
+        hostname: "{{ inventory_hostname }}"
+        domain_name: "{{ domain_name }}"
+        state: present
+
+    - name: Disable DNS lookup
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - no ip domain-lookup
+
+    # ---------------------------------------------------------------------
+    # STEP 1: Create the management interface FIRST (Loopback0 or SVI),
+    # before anything else references it as a source-interface.
+    # ---------------------------------------------------------------------
+    - name: Enable IP routing
+      tags:
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - ip routing
+      
+    - name: Create Loopback0 interface (L3 distribution switches)
+      tags: L3
+      cisco.ios.ios_interfaces:
+        config:
+          - name: Loopback0
+            description: "Management/Router-ID Loopback"
+            enabled: true
+        state: merged
+
+    - name: Configure Loopback0 IP address (L3 distribution switches)
+      tags: L3
+      cisco.ios.ios_l3_interfaces:
+        config:
+          - name: Loopback0
+            ipv4:
+              - address: "{{ mgmt_ip }}"  # CIDR notation, e.g. 10.0.0.1/32
+        state: merged
+
+    # is auto-created once the VLAN exists). If not already provisioned
+    # manually, add an ios_vlans task for vlan 99 tagged L2 before this task.
+
+    - name: Configure MGMT VLAN
+      tags: L2
+      cisco.ios.ios_vlans:
+        config:
+          - name: MGMT
+            vlan_id: 99
+            state: active
+            shutdown: disabled
+
+    - name: Configure Management IP SVI (L2 access switches)
+      tags: L2
+      cisco.ios.ios_l3_interfaces:
+        config:
+          - name: vlan99
+            ipv4:
+              - address: "{{ mgmt_ip }}"   # must be CIDR, e.g. 10.0.0.1/24
+        state: merged
+
+    # ---------------------------------------------------------------------
+    # STEP 2: Common baseline config (users, clock) — applies to both roles.
+    # ---------------------------------------------------------------------
+
+    - name: Create local users
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_user:
+        name: "{{ item.name }}"
+        configured_password: "{{ item.password }}"
+        privilege: "{{ item.privilege }}"
+        state: present
+      loop:
+        - { name: "{{ admin_username }}", password: "{{ admin_password }}", privilege: 15 }
+      no_log: true
+
+    # ---------------------------------------------------------------------
+    # STEP 3: SSH assurance
+    # ---------------------------------------------------------------------
+    # - name: Generate RSA key 
+    #   tags:
+    #     - L2
+    #     - L3
+    #   cisco.ios.ios_command:
+    #     commands:
+    #       - crypto key generate rsa modulus 2048
+    #   ignore_errors: true
+
+    - name: Configure SSH access ACL
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_acls:
+        config:
+          - afi: ipv4
+            acls:
+              - name: SSH_ACCESS
+                acl_type: extended
+                aces:
+                  - grant: permit
+                    protocol: tcp
+                    source:
+                      address: 192.168.0.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      any: true
+                      port_protocol:
+                        eq: 22
+        state: merged
+
+    - name: Enable SSH version 2
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - ip ssh version 2
+          - ip ssh time-out 60
+          - ip ssh authentication-retries 3
+
+    - name: Configure VTY lines
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        parents:
+          - line vty 0 15
+        lines:
+          - login local
+          - transport input ssh
+          - access-class SSH_ACCESS in
+
+    # ---------------------------------------------------------------------
+    # STEP 4: Timezone and NTP — base server config first, THEN role-specific source
+    # interface (which now exists from Step 1).
+    # ---------------------------------------------------------------------
+
+    - name: Set timezone
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - "clock timezone GMT +5"
+
+    - name: Configure NTP servers
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_ntp_global:
+        config:
+          servers:
+            - server: "{{ ntp_server_ip }}"
+              prefer: true
+        state: merged
+
+    - name: Configure NTP source interface (L2 access switch)
+      tags: L2
+      cisco.ios.ios_ntp_global:
+        config:
+          source: vlan99
+        state: merged
+
+    - name: Configure NTP source interface (L3 distribution switch)
+      tags: L3
+      cisco.ios.ios_ntp_global:
+        config:
+          source: Loopback0
+        state: merged
+
+    # ---------------------------------------------------------------------
+    # STEP 5: Logging — base config first, THEN role-specific source
+    # interface.
+    # ---------------------------------------------------------------------
+
+    - name: Configure logging
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_logging_global:
+        config:
+          buffered:
+            severity: informational
+            size: 16384
+          console:
+            severity: warnings
+          hosts:
+            - hostname: "{{ nms_ip }}"
+          trap: informational
+        state: merged
+
+    - name: Configure logging source interface (L2 access switch)
+      tags: L2
+      cisco.ios.ios_logging_global:
+        config:
+          source_interface:
+            - interface: vlan99
+        state: merged
+
+    - name: Configure logging source interface (L3 distribution switch)
+      tags: L3
+      cisco.ios.ios_logging_global:
+        config:
+          source_interface:
+            - interface: Loopback0
+        state: merged
+
+    # ---------------------------------------------------------------------
+    # STEP 6: SNMP server
+    # ---------------------------------------------------------------------
+
+    - name: Create SNMP access ACL
+      cisco.ios.ios_acls:
+        config:
+          - afi: ipv4
+            acls:
+              - name: SNMP_ACCESS
+                aces:
+                  - grant: permit
+                    protocol: udp
+                    source:
+                      address: 192.168.0.107
+                      wildcard_bits: 0.0.0.0
+                    destination:
+                      any: true
+                      port_protocol:
+                        eq: 161
+        state: merged
+
+    - name: Configure SNMP
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_snmp_server:
+        config:
+          communities:
+            - name: "{{ nms_community }}"   # avoid default string 'public'
+              acl_v4: SNMP_ACCESS
+              ro: true
+        state: merged
+
+    - name: Configure SNMP trap source interface (L2 access switch)
+      tags: L2
+      cisco.ios.ios_snmp_server:
+        config:
+          trap_source: Vlan99
+        state: merged
+
+    - name: Configure SNMP trap source interface (L3 distribution switch)
+      tags: L3
+      cisco.ios.ios_snmp_server:
+        config:
+          trap_source: Loopback0
+        state: merged
+
+    - name: Enable all SNMP traps
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - snmp-server enable traps
+
+    - name: Define SNMP trap receiver (NMS)
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_snmp_server:
+        config:
+          hosts:
+            - host: "{{ nms_ip }}"
+              community_string: "{{ nms_community }}"
+              version: "2c"
+        state: merged
+
+    # ---------------------------------------------------------------------
+    # STEP 7: Configure CDP and LLDP for NMS
+    # ---------------------------------------------------------------------
+    - name: Enable CDP
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - cdp run
+
+    - name: Enable LLDP
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - lldp run
+
+    # ---------------------------------------------------------------------
+    # STEP 8: Configure banner
+    # ---------------------------------------------------------------------
+
+    - name: Configure banners
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_banner:
+        banner: motd
+        text: |
+          ***************************************
+          Unauthorized access is prohibited.
+          All activity is logged and monitored.
+          CCNP LAB 101
+          ***************************************
+        state: present
+
+    - name: Save configuration
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        save_when: modified

@@ -1,0 +1,22 @@
+- name: Configure Switch Vlans
+  hosts: ios_switches
+  gather_facts: false
+  tasks: 
+    - name: Configure Vlans
+      cisco.ios.ios_vlans:
+        config:
+          - name: "{{ item.name}}"
+            vlan_id: "{{item.id}}"
+            state: active
+            shutdown: disabled
+      loop:
+        - { name: TEN, id: 10 }
+        - { name: TWENTY, id: 20 }
+        - { name: THIRTY, id: 30 }
+
+    - name: Save configuration
+      cisco.ios.ios_config:
+        save_when: modified
+
+
+        
