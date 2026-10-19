@@ -1,16 +1,19 @@
 Building configuration...
 
-Current configuration : 6838 bytes
+Current configuration : 7373 bytes
 !
-! Last configuration change at 22:18:54 GMT Fri Sep 25 2026 by admin
+! Last configuration change at 21:49:59 GMT Mon Oct 19 2026
 !
 version 15.2
-service timestamps debug datetime msec
-service timestamps log datetime msec
-no service password-encryption
+no service pad
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime msec localtime show-timezone year
+service timestamps log datetime msec localtime show-timezone year
+service password-encryption
 service compress-config
 !
-hostname DSW1
+hostname ASW1
 !
 boot-start-marker
 boot-end-marker
@@ -18,8 +21,9 @@ boot-end-marker
 !
 logging buffered 16384 informational
 logging console warnings
+enable secret 9 $9$gYnhlopxlhXCkP$hUc5DVhB62lij/7.f0FAgSHf1SZngPX5QCmN1Nr9rQc
 !
-username admin privilege 15 secret 5 $1$J.j/$H6y5LkUw2RGjkRzN4pCVF1
+username admin privilege 15 secret 5 $1$O7s5$5sGIDvv74SnVB33eHh2yV0
 no aaa new-model
 clock timezone GMT 5 0
 !
@@ -27,12 +31,17 @@ clock timezone GMT 5 0
 !
 !
 !
+vtp mode off
 !
 !
 !
+no ip bootp server
 no ip domain-lookup
 ip domain-name lab.com
 ip cef
+login block-for 120 attempts 3 within 60
+login on-failure log
+login on-success log
 no ipv6 cef
 !
 !
@@ -40,6 +49,18 @@ no ipv6 cef
 spanning-tree mode pvst
 spanning-tree extend system-id
 !
+!
+vlan 10
+ name TEN
+!
+vlan 20
+ name TWENTY
+!
+vlan 30
+ name THIRTY
+!
+vlan 99
+ name MGMT
 lldp run
 !
 ! 
@@ -54,10 +75,6 @@ lldp run
 !
 !
 !
-!
-interface Loopback0
- description Management/Router-ID Loopback
- ip address 1.1.1.1 255.255.255.255
 !
 interface GigabitEthernet0/0
  switchport access vlan 99
@@ -74,29 +91,32 @@ interface GigabitEthernet0/3
  negotiation auto
 !
 interface Vlan99
- ip address dhcp
+ ip address 192.168.197.140 255.255.255.0
 !
 ip forward-protocol nd
 !
-ip http server
-ip http secure-server
+no ip http server
+no ip http secure-server
 !
-ip route 0.0.0.0 0.0.0.0 192.168.0.1
 ip ssh time-out 60
 ip ssh version 2
 ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
 ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
 !
-ip access-list extended SSH_ACCESS
- permit tcp 192.168.0.0 0.0.0.255 any eq 22
+ip access-list standard SNMP_ACCESS
+ permit 192.168.197.0 0.0.0.255
 !
-logging source-interface Loopback0
+ip access-list extended SSH_ACCESS
+ permit tcp 192.168.197.0 0.0.0.255 any eq 22
+!
+logging source-interface Vlan99
 logging host 192.168.0.107
+logging host 192.168.197.134
 !
 !
 !
 snmp-server community NMS_COMMUNITY RO SNMP_ACCESS
-snmp-server trap-source Loopback0
+snmp-server trap-source Vlan99
 snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
 snmp-server enable traps flowmon
 snmp-server enable traps tty
@@ -166,6 +186,7 @@ snmp-server enable traps ethernet cfm alarm
 snmp-server enable traps mpls vpn
 snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
 snmp-server host 192.168.0.107 version 2c NMS_COMMUNITY 
+snmp-server host 192.168.197.134 version 2c NMS_COMMUNITY 
 !
 control-plane
 !
@@ -205,17 +226,21 @@ CCNP LAB 101
 ^C
 !
 line con 0
+ logging synchronous
 line aux 0
 line vty 0 4
  access-class SSH_ACCESS in
+ logging synchronous
  login local
  transport input ssh
 line vty 5 15
  access-class SSH_ACCESS in
+ logging synchronous
  login local
  transport input ssh
 !
-ntp source Loopback0
+ntp source Vlan99
 ntp server 192.168.0.107 prefer
+ntp server 192.168.197.134 prefer
 !
 end

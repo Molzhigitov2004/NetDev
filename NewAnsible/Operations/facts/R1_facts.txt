@@ -1,0 +1,133 @@
+{
+    "net_all_ipv4_addresses": [
+        "192.168.197.141",
+        "2.2.2.2"
+    ],
+    "net_all_ipv6_addresses": [],
+    "net_api": "cliconf",
+    "net_config": "Building configuration...\n\n  \nCurrent configuration : 9227 bytes\n!\n! Last configuration change at 22:21:19 GMT Mon Oct 19 2026 by admin\n!\nversion 15.9\nno service pad\nservice tcp-keepalives-in\nservice tcp-keepalives-out\nservice timestamps debug datetime msec localtime show-timezone year\nservice timestamps log datetime msec localtime show-timezone year\nservice password-encryption\n!\nhostname R1\n!\nboot-start-marker\nboot-end-marker\n!\n!\nlogging buffered 16384 informational\nlogging console warnings\nenable secret 9 $9$PRsO6K4dFn5vuP$3t7.hexPlihZQwCnYv6GmNokKBMoM.389jy5ip/bCBc\n!\nno aaa new-model\n!\n!\n!\nclock timezone GMT 5 0\nmmi polling-interval 60\nno mmi auto-configure\nno mmi pvc\nmmi snmp-timeout 180\n!\n!\n!\n!\n!\nno ip source-route\n!\n!\n!\n!\n!\n!\nno ip bootp server\nno ip domain lookup\nip domain name lab.com\nip cef\nlogin block-for 120 attempts 3 within 60\nlogin on-failure log\nlogin on-success log\nno ipv6 cef\n!\nmultilink bundle-name authenticated\n!\n!\n!\n!\nusername admin privilege 15 secret 9 $9$6VKjzPbHwsHnzs$SFm/brMq5aoP/wdygMlcqsuewe6Ddlbym83eQ4McaJk\n!\nredundancy\n!\nlldp run\n!\n! \n!\n!\n!\n!\n!\n!\n!\n!\n!\n!\n!\n!\ninterface Loopback0\n description Management/Router-ID Loopback\n ip address 2.2.2.2 255.255.255.255\n!\ninterface GigabitEthernet0/0\n ip address dhcp\n duplex auto\n speed auto\n media-type rj45\n!\ninterface GigabitEthernet0/1\n no ip address\n shutdown\n duplex auto\n speed auto\n media-type rj45\n!\ninterface GigabitEthernet0/2\n no ip address\n shutdown\n duplex auto\n speed auto\n media-type rj45\n!\ninterface GigabitEthernet0/3\n no ip address\n shutdown\n duplex auto\n speed auto\n media-type rj45\n!\nip forward-protocol nd\n!\n!\nno ip http server\nno ip http secure-server\nip ssh time-out 60\nip ssh version 2\n!\nip access-list standard SNMP_ACCESS\n permit 192.168.197.0 0.0.0.255\n!\nip access-list extended SSH_ACCESS\n permit tcp 192.168.197.0 0.0.0.255 any eq 22\n!\nlogging source-interface Loopback0\nlogging host 192.168.197.134\nipv6 ioam timestamp\n!\nsnmp-server community NMS_COMMUNITY RO SNMP_ACCESS\nsnmp-server trap-source Loopback0\nsnmp-server chassis-id \nsnmp-server enable traps snmp authentication linkdown linkup coldstart warmstart\nsnmp-server enable traps vrrp\nsnmp-server enable traps pfr\nsnmp-server enable traps flowmon\nsnmp-server enable traps tty\nsnmp-server enable traps eigrp\nsnmp-server enable traps ospf state-change\nsnmp-server enable traps ospf errors\nsnmp-server enable traps ospf retransmit\nsnmp-server enable traps ospf lsa\nsnmp-server enable traps ospf cisco-specific state-change nssa-trans-change\nsnmp-server enable traps ospf cisco-specific state-change shamlink interface\nsnmp-server enable traps ospf cisco-specific state-change shamlink neighbor\nsnmp-server enable traps ospf cisco-specific errors\nsnmp-server enable traps ospf cisco-specific retransmit\nsnmp-server enable traps ospf cisco-specific lsa\nsnmp-server enable traps ethernet cfm cc mep-up mep-down cross-connect loop config\nsnmp-server enable traps ethernet cfm crosscheck mep-missing mep-unknown service-up\nsnmp-server enable traps ethernet evc status create delete\nsnmp-server enable traps diameter\nsnmp-server enable traps vrrpv3\nsnmp-server enable traps auth-framework sec-violation auth-fail\nsnmp-server enable traps trustsec-sxp conn-srcaddr-err msg-parse-err conn-config-err binding-err conn-up conn-down binding-expn-fail oper-nodeid-change binding-conflict\nsnmp-server enable traps aaa_server\nsnmp-server enable traps atm subif\nsnmp-server enable traps bfd\nsnmp-server enable traps bgp cbgp2\nsnmp-server enable traps bstun\nsnmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency\nsnmp-server enable traps memory bufferpeak\nsnmp-server enable traps cnpd\nsnmp-server enable traps config-copy\nsnmp-server enable traps config\nsnmp-server enable traps config-ctid\nsnmp-server enable traps dlsw\nsnmp-server enable traps dsp card-status\nsnmp-server enable traps dsp oper-state\nsnmp-server enable traps dsp video-usage\nsnmp-server enable traps dsp video-out-of-resource\nsnmp-server enable traps entity-ext\nsnmp-server enable traps entity\nsnmp-server enable traps fru-ctrl\nsnmp-server enable traps resource-policy\nsnmp-server enable traps frame-relay multilink bundle-mismatch\nsnmp-server enable traps frame-relay\nsnmp-server enable traps frame-relay subif\nsnmp-server enable traps hsrp\nsnmp-server enable traps ipmobile\nsnmp-server enable traps ipmulticast\nsnmp-server enable traps isis\nsnmp-server enable traps mempool\nsnmp-server enable traps mpls traffic-eng\nsnmp-server enable traps mpls fast-reroute protected\nsnmp-server enable traps mpls rfc ldp\nsnmp-server enable traps mpls ldp\nsnmp-server enable traps msdp\nsnmp-server enable traps mvpn\nsnmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message\nsnmp-server enable traps pppoe\nsnmp-server enable traps cpu threshold\nsnmp-server enable traps nhrp nhs\nsnmp-server enable traps nhrp nhc\nsnmp-server enable traps nhrp nhp\nsnmp-server enable traps nhrp quota-exceeded\nsnmp-server enable traps rsvp\nsnmp-server enable traps ipsla\nsnmp-server enable traps stun\nsnmp-server enable traps syslog\nsnmp-server enable traps l2tun session\nsnmp-server enable traps l2tun pseudowire status\nsnmp-server enable traps pw vc\nsnmp-server enable traps waas \nsnmp-server enable traps event-manager\nsnmp-server enable traps lisp\nsnmp-server enable traps firewall serverstatus\nsnmp-server enable traps ospfv3 state-change\nsnmp-server enable traps ospfv3 errors\nsnmp-server enable traps pki\nsnmp-server enable traps gdoi gm-start-registration\nsnmp-server enable traps gdoi gm-registration-complete\nsnmp-server enable traps gdoi gm-re-register\nsnmp-server enable traps gdoi gm-rekey-rcvd\nsnmp-server enable traps gdoi gm-rekey-fail\nsnmp-server enable traps gdoi ks-rekey-pushed\nsnmp-server enable traps gdoi gm-incomplete-cfg\nsnmp-server enable traps gdoi ks-no-rsa-keys\nsnmp-server enable traps gdoi ks-new-registration\nsnmp-server enable traps gdoi ks-reg-complete\nsnmp-server enable traps gdoi ks-role-change\nsnmp-server enable traps gdoi ks-gm-deleted\nsnmp-server enable traps gdoi ks-peer-reachable\nsnmp-server enable traps gdoi ks-peer-unreachable\nsnmp-server enable traps ike policy add\nsnmp-server enable traps ike policy delete\nsnmp-server enable traps ike tunnel start\nsnmp-server enable traps ike tunnel stop\nsnmp-server enable traps ipsec cryptomap add\nsnmp-server enable traps ipsec cryptomap delete\nsnmp-server enable traps ipsec cryptomap attach\nsnmp-server enable traps ipsec cryptomap detach\nsnmp-server enable traps ipsec tunnel start\nsnmp-server enable traps ipsec tunnel stop\nsnmp-server enable traps ipsec too-many-sas\nsnmp-server enable traps ethernet cfm alarm\nsnmp-server enable traps rf\nsnmp-server enable traps bulkstat collection transfer\nsnmp-server enable traps mpls vpn\nsnmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down\nsnmp-server host 192.168.197.134 version 2c NMS_COMMUNITY \n!\n!\ncontrol-plane\n!\nbanner exec ^C\n**************************************************************************\n* IOSv is strictly limited to use for evaluation, demonstration and IOS  *\n* education. IOSv is provided as-is and is not supported by Cisco's      *\n* Technical Advisory Center. Any use or disclosure, in whole or in part, *\n* of the IOSv Software or Documentation to any third party for any       *\n* purposes is expressly prohibited except as otherwise authorized by     *\n* Cisco in writing.                                                      *\n**************************************************************************^C\nbanner incoming ^C\n**************************************************************************\n* IOSv is strictly limited to use for evaluation, demonstration and IOS  *\n* education. IOSv is provided as-is and is not supported by Cisco's      *\n* Technical Advisory Center. Any use or disclosure, in whole or in part, *\n* of the IOSv Software or Documentation to any third party for any       *\n* purposes is expressly prohibited except as otherwise authorized by     *\n* Cisco in writing.                                                      *\n**************************************************************************^C\nbanner login ^C\n**************************************************************************\n* IOSv is strictly limited to use for evaluation, demonstration and IOS  *\n* education. IOSv is provided as-is and is not supported by Cisco's      *\n* Technical Advisory Center. Any use or disclosure, in whole or in part, *\n* of the IOSv Software or Documentation to any third party for any       *\n* purposes is expressly prohibited except as otherwise authorized by     *\n* Cisco in writing.                                                      *\n**************************************************************************^C\nbanner motd ^C\n***************************************\nUnauthorized access is prohibited.\nAll activity is logged and monitored.\nCCNP LAB 101\n***************************************\n^C\n!\nline con 0\n logging synchronous\nline aux 0\nline vty 0 4\n access-class SSH_ACCESS in\n logging synchronous\n login local\n transport input ssh\nline vty 5 15\n access-class SSH_ACCESS in\n logging synchronous\n login local\n transport input ssh\n!\nno scheduler allocate\nntp source Loopback0\nntp server 192.168.197.134 prefer\n!\nend",
+    "net_cpu_utilization": {
+        "core": {
+            "five_minutes": 9,
+            "five_seconds": 5,
+            "five_seconds_interrupt": 0,
+            "one_minute": 6
+        }
+    },
+    "net_filesystems": [
+        "flash0:"
+    ],
+    "net_filesystems_info": {
+        "flash0:": {
+            "spacefree_kb": 1941068.0,
+            "spacetotal_kb": 2092496.0
+        }
+    },
+    "net_gather_network_resources": [],
+    "net_gather_subset": [
+        "hardware",
+        "default",
+        "config",
+        "interfaces"
+    ],
+    "net_hostname": "R1",
+    "net_image": "flash0:/vios-adventerprisek9-m",
+    "net_interfaces": {
+        "GigabitEthernet0/0": {
+            "bandwidth": 1000000,
+            "description": null,
+            "duplex": "Auto",
+            "ipv4": [
+                {
+                    "address": "192.168.197.141",
+                    "subnet": "24"
+                }
+            ],
+            "lineprotocol": "up",
+            "macaddress": "5254.0073.fe04",
+            "mediatype": "RJ45",
+            "mtu": 1500,
+            "operstatus": "up",
+            "type": "iGbE"
+        },
+        "GigabitEthernet0/1": {
+            "bandwidth": 1000000,
+            "description": null,
+            "duplex": "Auto",
+            "ipv4": [],
+            "lineprotocol": "down",
+            "macaddress": "5254.00f5.6e6c",
+            "mediatype": "RJ45",
+            "mtu": 1500,
+            "operstatus": "administratively down",
+            "type": "iGbE"
+        },
+        "GigabitEthernet0/2": {
+            "bandwidth": 1000000,
+            "description": null,
+            "duplex": "Auto",
+            "ipv4": [],
+            "lineprotocol": "down",
+            "macaddress": "5254.007d.be53",
+            "mediatype": "RJ45",
+            "mtu": 1500,
+            "operstatus": "administratively down",
+            "type": "iGbE"
+        },
+        "GigabitEthernet0/3": {
+            "bandwidth": 1000000,
+            "description": null,
+            "duplex": "Auto",
+            "ipv4": [],
+            "lineprotocol": "down",
+            "macaddress": "5254.00f9.0de2",
+            "mediatype": "RJ45",
+            "mtu": 1500,
+            "operstatus": "administratively down",
+            "type": "iGbE"
+        },
+        "Loopback0": {
+            "bandwidth": 8000000,
+            "description": "Management/Router-ID Loopback",
+            "duplex": null,
+            "ipv4": [
+                {
+                    "address": "2.2.2.2",
+                    "subnet": "32"
+                }
+            ],
+            "lineprotocol": "up",
+            "macaddress": null,
+            "mediatype": null,
+            "mtu": 1514,
+            "operstatus": "up",
+            "type": null
+        }
+    },
+    "net_iostype": "IOS",
+    "net_memfree_mb": 239.37091827392578,
+    "net_memtotal_mb": 301.8792533874512,
+    "net_model": "IOSv",
+    "net_neighbors": {
+        "GigabitEthernet0/0": [
+            {
+                "host": "ASW1.lab.com",
+                "ip": "192.168.197.140",
+                "platform": "Cisco ",
+                "port": "GigabitEthernet0/0"
+            },
+            {
+                "host": "DSW1.lab.com",
+                "ip": "192.168.197.139",
+                "platform": "Cisco ",
+                "port": "GigabitEthernet0/0"
+            }
+        ]
+    },
+    "net_operatingmode": "autonomous",
+    "net_python_version": "3.14.4",
+    "net_serialnum": "9QX1ZO76KQG3JCDLFS4R0",
+    "net_system": "ios",
+    "net_version": "15.9(3)M12",
+    "network_resources": {}
+}

@@ -1,4 +1,4 @@
-ansible_host: 192.168.0.163 
+ansible_host: 192.168.197.139
 ansible_user: admin
 ansible_ssh_pass: cisco
 ansible_connection: network_cli

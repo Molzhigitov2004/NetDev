@@ -1,0 +1,95 @@
+# =========================================================================
+# AAA PLAYBOOK - local console fallback + TACACS+ default method lists
+# =========================================================================
+# USAGE:
+#   ansible-playbook -i devices.ini aaa_config.yml
+#   ansible-playbook -i devices.ini aaa_config.yml --tags init
+#       -> local fallback ONLY (aaa new-model + CONSOLE_FALLBACK on line con 0).
+#          Safe without a TACACS+ server. VTY (Ansible) keeps using local users.
+#
+#   ansible-playbook -i devices.ini aaa_config.yml --tags init,tacacs
+#       -> fallback + TACACS+ servers, server group and default method lists.
+#          ONLY run once a TACACS+ server is reachable, otherwise every login
+#          and every command waits for the TACACS timeout before falling back.
+#
+# SAFEGUARD:
+#   TACACS tasks are tagged [tacacs, never] -> they NEVER run unless you
+#   explicitly pass --tags tacacs.
+#
+# BEFORE RUNNING:
+#   - Local users must already exist (initial config playbook).
+#   - tacacs_servers must be defined in group_vars/ios_devices.yml.
+#   - Test on ONE device first: --limit <host> --check --diff
+#   - Keep a console session open in CML in case of lockout.
+# =========================================================================
+- name: Makes AAA configs based on TACACS+ server group, with local method list fallback for the console line
+  hosts: ios_devices
+  gather_facts: false
+  tasks:
+    - name: Enable AAA on this device
+      tags: init
+      cisco.ios.ios_config:
+        lines:
+          - aaa new-model
+
+    - name: Make custom method-list for console line
+      tags: init
+      cisco.ios.ios_config:
+        lines:
+          - aaa authentication login CONSOLE_FALLBACK local line enable
+          - aaa authorization exec CONSOLE_FALLBACK none
+          - aaa authorization commands 0 CONSOLE_FALLBACK none
+          - aaa authorization commands 1 CONSOLE_FALLBACK none
+          - aaa authorization commands 15 CONSOLE_FALLBACK none
+
+    - name: Enable custom method list auth on the console line 0
+      tags: init
+      cisco.ios.ios_config:
+        lines:
+          - login authentication CONSOLE_FALLBACK
+          - authorization exec CONSOLE_FALLBACK
+          - authorization commands 0 CONSOLE_FALLBACK
+          - authorization commands 1 CONSOLE_FALLBACK
+          - authorization commands 15 CONSOLE_FALLBACK
+          - privilege level 15
+        parents: line console 0
+
+    - name: Enable authorization for console and configuration changes
+      tags: init
+      cisco.ios.ios_config:
+        lines:
+          - aaa authorization console
+          - aaa authorization config-commands
+
+    - name: Define tacacs+ servers
+      tags: [tacacs, never]
+      cisco.ios.ios_config:
+        lines:
+          - address ipv4 {{ item.ip }}
+          - key {{ item.secret }}
+        parents: tacacs server {{ item.name }}
+      loop: "{{ tacacs_servers }}"
+      no_log: true
+
+    - name: Define tacacs+ server group
+      tags: [tacacs, never]
+      cisco.ios.ios_config:
+        lines:
+          - server name {{ item.name }}
+        parents: aaa group server tacacs+ TACACS_SRV_GROUP
+      loop: "{{ tacacs_servers }}"
+
+    - name: Enable default method lists
+      tags: [tacacs, never]
+      cisco.ios.ios_config:
+        lines:
+          - aaa authentication login default group TACACS_SRV_GROUP local
+          - aaa authentication enable default group TACACS_SRV_GROUP enable
+          - aaa authorization exec default group TACACS_SRV_GROUP if-authenticated
+          - aaa authorization commands 0 default group TACACS_SRV_GROUP if-authenticated
+          - aaa authorization commands 1 default group TACACS_SRV_GROUP if-authenticated
+          - aaa authorization commands 15 default group TACACS_SRV_GROUP if-authenticated
+          - aaa accounting exec default start-stop group TACACS_SRV_GROUP
+          - aaa accounting commands 0 default start-stop group TACACS_SRV_GROUP
+          - aaa accounting commands 1 default start-stop group TACACS_SRV_GROUP
+          - aaa accounting commands 15 default start-stop group TACACS_SRV_GROUP

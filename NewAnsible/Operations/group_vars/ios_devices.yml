@@ -1,0 +1,8 @@
+tacacs_servers:
+  - name: PRIMARY_TACACS_SRV
+    ip: 1.1.1.1
+    secret: PRIMARY_TACACS_KEY
+
+  - name: SECONDARY_TACACS_SRV
+    ip: 1.1.1.1
+    secret: SECONDARY_TACACS_KEY
