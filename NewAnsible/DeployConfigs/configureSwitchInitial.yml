@@ -6,10 +6,10 @@
   # Run with: --tags L2   (access switches, SVI-based mgmt)
   #      or:  --tags L3   (distribution switches, Loopback0-based mgmt)
 
+  tasks:
     # ---------------------------------------------------------------------
     # STEP 0: FQDN and no damned dns lookup
     # ---------------------------------------------------------------------
-  tasks:
     - name: Set domain name and lookup parameters
       tags:
         - L2
@@ -37,7 +37,7 @@
       cisco.ios.ios_config:
         lines:
           - ip routing
-      
+
     - name: Create Loopback0 interface (L3 distribution switches)
       tags: L3
       cisco.ios.ios_interfaces:
@@ -56,9 +56,7 @@
               - address: "{{ mgmt_ip }}"  # CIDR notation, e.g. 10.0.0.1/32
         state: merged
 
-    # is auto-created once the VLAN exists). If not already provisioned
-    # manually, add an ios_vlans task for vlan 99 tagged L2 before this task.
-
+    # VLAN 99 must exist before its SVI (Vlan99) can be configured.
     - name: Configure MGMT VLAN
       tags: L2
       cisco.ios.ios_vlans:
@@ -67,12 +65,13 @@
             vlan_id: 99
             state: active
             shutdown: disabled
+        state: merged
 
     - name: Configure Management IP SVI (L2 access switches)
       tags: L2
       cisco.ios.ios_l3_interfaces:
         config:
-          - name: vlan99
+          - name: Vlan99
             ipv4:
               - address: "{{ mgmt_ip }}"   # must be CIDR, e.g. 10.0.0.1/24
         state: merged
@@ -80,7 +79,6 @@
     # ---------------------------------------------------------------------
     # STEP 2: Common baseline config (users, clock) — applies to both roles.
     # ---------------------------------------------------------------------
-
     - name: Create local users
       tags:
         - L2
@@ -97,7 +95,7 @@
     # ---------------------------------------------------------------------
     # STEP 3: SSH assurance
     # ---------------------------------------------------------------------
-    # - name: Generate RSA key 
+    # - name: Generate RSA key
     #   tags:
     #     - L2
     #     - L3
@@ -120,7 +118,7 @@
                   - grant: permit
                     protocol: tcp
                     source:
-                      address: 192.168.0.0
+                      address: 192.168.197.0
                       wildcard_bits: 0.0.0.255
                     destination:
                       any: true
@@ -149,12 +147,13 @@
           - login local
           - transport input ssh
           - access-class SSH_ACCESS in
+          - exec-timeout 10 0
+          - logging synchronous
 
     # ---------------------------------------------------------------------
     # STEP 4: Timezone and NTP — base server config first, THEN role-specific source
     # interface (which now exists from Step 1).
     # ---------------------------------------------------------------------
-
     - name: Set timezone
       tags:
         - L2
@@ -178,7 +177,7 @@
       tags: L2
       cisco.ios.ios_ntp_global:
         config:
-          source: vlan99
+          source: Vlan99
         state: merged
 
     - name: Configure NTP source interface (L3 distribution switch)
@@ -192,7 +191,6 @@
     # STEP 5: Logging — base config first, THEN role-specific source
     # interface.
     # ---------------------------------------------------------------------
-
     - name: Configure logging
       tags:
         - L2
@@ -205,7 +203,7 @@
           console:
             severity: warnings
           hosts:
-            - hostname: "{{ nms_ip }}"
+            - hostname: "{{ syslog_ip }}"
           trap: informational
         state: merged
 
@@ -214,7 +212,7 @@
       cisco.ios.ios_logging_global:
         config:
           source_interface:
-            - interface: vlan99
+            - interface: Vlan99
         state: merged
 
     - name: Configure logging source interface (L3 distribution switch)
@@ -228,23 +226,21 @@
     # ---------------------------------------------------------------------
     # STEP 6: SNMP server
     # ---------------------------------------------------------------------
-
     - name: Create SNMP access ACL
+      tags:
+        - L2
+        - L3
       cisco.ios.ios_acls:
         config:
           - afi: ipv4
             acls:
               - name: SNMP_ACCESS
+                acl_type: standard
                 aces:
                   - grant: permit
-                    protocol: udp
                     source:
-                      address: 192.168.0.107
-                      wildcard_bits: 0.0.0.0
-                    destination:
-                      any: true
-                      port_protocol:
-                        eq: 161
+                      address: 192.168.197.0
+                      wildcard_bits: 0.0.0.255
         state: merged
 
     - name: Configure SNMP
@@ -315,7 +311,6 @@
     # ---------------------------------------------------------------------
     # STEP 8: Configure banner
     # ---------------------------------------------------------------------
-
     - name: Configure banners
       tags:
         - L2
@@ -330,6 +325,67 @@
           ***************************************
         state: present
 
+    # ---------------------------------------------------------------------
+    # STEP 9: Device Hardening
+    # ---------------------------------------------------------------------
+    - name: Device hardening - global commands
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        lines:
+          - no ip http server
+          - no ip http secure-server
+          - no ip bootp server
+          - login block-for 120 attempts 3 within 60
+          - login on-failure log
+          - login on-success log
+          - no ip source-route 
+          - vtp mode off   # use "vtp mode transparent" if the image rejects "off"
+
+    - name: Device hardening - console line
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_config:
+        parents:
+          - line con 0
+        lines:
+          - exec-timeout 10 0
+          - logging synchronous
+
+    - name: Device hardening - services and timestamps
+      tags:
+        - L2
+        - L3
+      cisco.ios.ios_service:
+        config:
+          pad: false                 # no service pad
+          password_encryption: true
+          tcp_keepalives_in: true
+          tcp_keepalives_out: true
+          timestamps:
+            - msg: log
+              enable: true
+              timestamp: datetime
+              datetime_options:
+                localtime: true
+                msec: true
+                show_timezone: true
+                year: true
+            - msg: debug
+              enable: true
+              timestamp: datetime
+              datetime_options:
+                localtime: true
+                msec: true
+                show_timezone: true
+                year: true
+        state: merged
+
+    # ---------------------------------------------------------------------
+    # STEP LAST: Save Configuration
+    # ---------------------------------------------------------------------
     - name: Save configuration
       tags:
         - L2
