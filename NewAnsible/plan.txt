@@ -1,15 +1,15 @@
-1.  [x] Switch initial config playbook
-2.  [x] Router initial config playbook
-3.  [x] Config backup
-4.  [x] Inventory / facts report
-5.  [ ] Health check
-6.  [x] VLAN provisioning
-7.  [ ] Access & trunk ports
-8.  [ ] OSPF deployment
-9.  [ ] HSRP on the distribution pair
+1. [x] Switch initial config playbook
+2. [x] Router initial config playbook
+3. [x] Config backup
+4. [x] Inventory / facts report
+5. [ ] Health check
+6. [x] VLAN provisioning
+7. [ ] Access & trunk ports
+8. [ ] OSPF deployment
+9. [ ] HSRP on the distribution pair
 10. [ ] WAN edge BGP
-11. [ ] SNMPv3 + NTP authentication
-12. [ ] AAA
+11. [x] SNMPv3 + NTP authentication
+12. [x] AAA
 13. [ ] ACL management
 14. [ ] Auto interface descriptions from CDP/LLDP
 15. [ ] Compliance / drift check

@@ -1,0 +1,15 @@
+# snmp_acl_name       - name of the standard ACL that restricts SNMP access
+# snmp_acl_ip         - source network allowed to poll (e.g. 192.168.197.0)
+# snmp_acl_wildcard   - wildcard for that network (e.g. 0.0.0.255)
+# snmp_user           - SNMPv3 username (also used as the trap host user)
+# snmp_auth_key       - SNMPv3 authentication password (SHA)
+# snmp_priv_key       - SNMPv3 privacy/encryption password (AES 128)
+# snmpv3_nms_ip       - NMS IP address that receives traps
+
+snmp_acl_name: SNMPv3_ACCESS
+snmp_acl_ip: 192.168.197.0
+snmp_acl_wildcard: 0.0.0.255
+snmp_user: SNMPv3_NMS
+snmp_auth_key: cisco
+snmp_priv_key: cisco
+snmpv3_nms_ip: 192.168.197.134

@@ -1,0 +1,77 @@
+# Configure SNMPv3 for the device
+# Usage manual
+# In your inventory file create new group "ios_devices_snmpv3"
+# In that group put devices where you want to configure SNMPv3
+# In you group_vars directory create corresponding YAML for group
+# In the YAML file define the following variables
+# snmp_acl_name       - name of the standard ACL that restricts SNMP access
+# snmp_acl_ip         - source network allowed to poll (e.g. 192.168.197.0)
+# snmp_acl_wildcard   - wildcard for that network (e.g. 0.0.0.255)
+# snmp_user           - SNMPv3 username (also used as the trap host user)
+# snmp_auth_key       - SNMPv3 authentication password (SHA)
+# snmp_priv_key       - SNMPv3 privacy/encryption password (AES 128)
+# snmpv3_nms_ip       - NMS IP address that receives traps
+- name: Configure SNMPv3
+  hosts: ios_devices_snmpv3
+  gather_facts: false
+  tasks:
+    - name: Create Access-list for SNMPv3
+      cisco.ios.ios_acls:
+        config:
+          - afi: ipv4
+            acls:
+              - name: "{{ snmp_acl_name }}"
+                acl_type: standard
+                aces:
+                  - grant: permit
+                    source:
+                      address: "{{ snmp_acl_ip }}"
+                      wildcard_bits: "{{ snmp_acl_wildcard }}"
+        state: merged
+
+    - name: Configure SNMPv3 View
+      cisco.ios.ios_snmp_server:
+        config:
+          views:
+            - name: NMS_READ_ONLY
+              family_name: iso
+              included: true
+        state: merged
+
+    - name: Configure SNMPv3 Group
+      cisco.ios.ios_snmp_server:
+        config:
+          groups:
+            - group: NMS_RO_GROUP
+              version: v3
+              version_option: priv
+              read: NMS_READ_ONLY
+              acl_v4: "{{ snmp_acl_name }}"
+        state: merged
+
+    - name: Configure SNMPv3 Users
+      cisco.ios.ios_snmp_server:
+        config:
+          users:
+            - username: "{{ snmp_user }}"
+              group: NMS_RO_GROUP
+              version: v3
+              authentication:
+                algorithm: sha
+                password: "{{ snmp_auth_key }}"
+              encryption:
+                priv: aes
+                priv_option: "128"
+                password: "{{ snmp_priv_key }}"
+        state: merged
+      no_log: true
+
+    - name: Configure SNMPv3 Host
+      cisco.ios.ios_snmp_server:
+        config:
+          hosts:
+            - host: "{{ snmpv3_nms_ip }}"
+              version: "3"
+              version_option: priv
+              community_string: "{{ snmp_user }}"
+        state: merged
