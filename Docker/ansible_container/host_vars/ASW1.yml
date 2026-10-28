@@ -1,0 +1,9 @@
+ansible_host: 192.168.197.140
+ansible_user: admin
+ansible_ssh_pass: cisco
+ansible_connection: network_cli
+ansible_network_os: ios
+ansible_become: yes
+ansible_become_method: enable
+ansible_become_pass: cisco
+mgmt_ip: 192.168.197.140/24

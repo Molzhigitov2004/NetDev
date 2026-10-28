@@ -1,0 +1,23 @@
+version: '3.9'                 # old Compose file format version; ignored now, safe to delete
+
+services:                      # list of containers this project runs
+  ansible:                     # service name; also its DNS name on the project network
+    build:                     # build an image from a Dockerfile instead of pulling one
+      dockerfile: Dockerfile   # which file to build from (context defaults to this folder)
+
+  db:                          # second service; other containers reach it as "db"
+    image: postgres:14.1-alpine  # pull a ready image from Docker Hub: Postgres 14.1 on Alpine
+    environment:               # environment variables passed into the container
+      - POSTGRES_USER=postgres       # the image's startup script creates this DB user on first run
+      - POSTGRES_PASSWORD=postgres   # and sets its password (lab only; it's plaintext)
+    ports:
+      - '5432:5432'            # host:container; publishes Postgres on the host's port 5432
+    volumes:
+      - db:/var/lib/postgresql/data  # named volume "db" mounted where Postgres keeps its data
+  adminer:
+    image: adminer
+    ports:
+      - '8080:8080'
+volumes:                       # declares named volumes used above
+  db:                          # Docker creates and manages it (lives in /var/lib/docker/volumes)
+    driver: local              # stored on this host's disk; it's the default, so optional
